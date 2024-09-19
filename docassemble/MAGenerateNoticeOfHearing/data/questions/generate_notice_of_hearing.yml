@@ -1,3 +1,4 @@
+# comment
 ---
 include:
   - docassemble.AssemblyLine:assembly_line.yml
