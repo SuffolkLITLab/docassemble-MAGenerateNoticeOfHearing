@@ -1,0 +1,346 @@
+---
+include:
+  - docassemble.AssemblyLine:assembly_line.yml
+---
+metadata:
+  title: >-
+    Generate Notice of Hearing
+  short title: >-
+    Notice of Hearing
+  description: |-
+    This interview helps someone in Massachusetts generate a Notice of Hearing for an Eviction Sealing Petition.
+  can_I_use_this_form: |
+    If you are a litigant, you can use this interview to generate a notice of hearing form for an eviction sealing petition.
+  before_you_start: |
+    This interview will help you generate a Notice of Hearing for an Eviction Sealing Petition.
+    
+    Before you get started, please gather:
+    
+    1. Any court documents from the eviction action
+    2. Name of address of the respondent-landlord
+    3. Date, time, and location of the eviction sealing hearing
+    
+    When you are finished, you will need to:
+    
+    1. Print and sign the form
+    2. Bring or mail the form to the civil clerk's office of the designated Housing Court
+  maturity: production
+  estimated_completion_minutes: 5
+  estimated_completion_delta: 5
+  LIST_topics: 
+    - "CO-00-00-00-00"
+  tags:
+    - "CO-00-00-00-00"
+  authors:
+    - Rami Nabhan
+  original_form: []
+  original_form_published_on: ""
+  allowed_courts: 
+    - "Housing Court"
+  typical_role: "plaintiff"
+  al_weaver_version: "1.11.0"
+  generated_on: "2024-09-19"
+  languages:
+    - en
+  jurisdiction: NAM-US-US+MA
+  review_date: 2024-09-19
+  form_titles:
+    - Generate Notice of Hearing
+  form_numbers: []
+  update_notes: |
+---
+code: |
+  # This controls the default country and list of states in address field questions
+  AL_DEFAULT_COUNTRY = "US"
+---
+code: |
+  # This controls the default state in address field questions
+  AL_DEFAULT_STATE = "MA"
+---
+code: |
+  github_repo_name =  'docassemble-GenerateNoticeOfHearing'
+---
+code: |
+  interview_short_title = "Generate a Notice of Hearing for an Eviction Sealing Petition"
+---
+code: |
+  al_form_type = "existing_case" 
+---
+objects:
+  - users: ALPeopleList.using(there_are_any=True)
+---
+sections:
+  - review_generate_notice_of_hearing: Review your answers
+---
+#################### Interview order #####################
+comment: |
+  Controls order and branching logic for questions specific to this form
+id: interview_order_generate_notice_of_hearing
+code: |
+  # Set the allowed courts for this interview
+  allowed_courts = ['Housing Court']
+  nav.set_section("review_generate_notice_of_hearing")
+  user_role = "plaintiff"
+  user_ask_role = "plaintiff"
+  users.gather()
+  set_parts(subtitle=str(users))
+  users[0].address.address
+  users[0].phone_number
+  set_progress(20)
+  respondents.gather()
+  housing_court_division
+  trial_court.address.address
+  set_progress(40)
+  docket_number
+  hearing_date
+  signature_date
+  interview_order_generate_notice_of_hearing = True
+---
+###################### Main order ######################
+comment: |
+  This block includes the logic for standalone interviews.
+  Delete mandatory: True to include in another interview
+mandatory: True
+code: |
+  al_intro_screen
+  generate_notice_of_hearing_intro
+  interview_order_generate_notice_of_hearing
+  signature_date
+  # Store anonymous data for analytics / statistics
+  store_variables_snapshot(
+      persistent=True,
+      data={
+          "zip": showifdef("users[0].address.zip"),
+          "reached_interview_end": True,
+      },
+  )
+  generate_notice_of_hearing_download
+---
+id: Generate_Notice_of_Hearing
+continue button field: generate_notice_of_hearing_intro
+question: |
+  Generate Notice of Hearing
+subquestion: |
+  This interview will help you generate a Notice of Hearing for an Eviction Sealing Petition.
+  
+  Before you get started, please gather:
+  
+  1. Any court documents from the eviction action
+  2. Name of address of the respondent-landlord
+  3. Date, time, and location of the eviction sealing hearing
+  
+  When you are finished, you will need to:
+  
+  1. Print and sign the form
+  2. Bring or mail the form to the civil clerk's office of the designated Housing Court
+
+  If you are a litigant, you can use this interview to generate a notice of hearing form for an eviction sealing petition.
+
+  Most people take about 5 minutes to complete this interview.
+---
+id: Court Information
+question: |
+  Court Information
+subquestion: |
+  In which Housing Court is your hearing?
+fields:
+  - "Housing Court Division": housing_court_division
+    input type: dropdown
+    choices:
+      - Eastern
+      - Western
+      - Central
+      - Northeast
+      - Southeast
+      - Metro South
+  - "Housing Court Session": housing_court_session
+---
+id: Hearing Information
+question: |
+  Hearing Information
+subquestion: |
+  Provide the following information regarding your hearing.
+fields:
+  - "Date of Hearing": hearing_date
+    datatype: date
+  - "Time of Hearing": hearing_time
+  - "Courtroom Number": courtroom_number
+    datatype: integer
+    min: 0
+---
+id: preview generate_notice_of_hearing
+question: |
+  Preview your form before you sign it
+subquestion: |
+  Here is a preview of the form you will sign on the next page.   
+  
+  ${ al_court_bundle.as_pdf(key='preview') }
+
+  Click the image to open it in a new tab. Click the "Edit answers" button
+  to edit your answers.
+
+  ${ action_button_html(url_action('review_generate_notice_of_hearing'), label='Edit answers', color='info') }
+  
+  Remember to come back to this window to continue and sign your form.
+continue button field: generate_notice_of_hearing_preview_question    
+---
+code: |
+  signature_fields = ['users[0].signature']
+---
+code: |
+  # This is a placeholder for the addresses that will be searched
+  # for matching address to court. Edit if court venue is based on 
+  # a different address than the user's
+  [user.address.address for user in users.complete_elements()]
+  addresses_to_search = [user.address for user in users.complete_elements()]
+---
+id: generate notice of hearing review screen
+event: review_generate_notice_of_hearing
+question: |
+  Review your answers
+review:
+  - Edit: housing_court_division
+    button: |
+      **Housing Court Division**:
+      ${ housing_court_division }
+  - Edit: users.revisit
+    button: |
+      **Users**
+
+      % for item in users:
+        * ${ item }
+      % endfor
+  - Edit: housing_court_session
+    button: |
+      **Housing Court Session**:
+      ${ housing_court_session }
+  - Edit: respondents.revisit
+    button: |
+      **Respondents**
+
+      % for item in respondents:
+        * ${ item }
+      % endfor
+  - Edit: hearing_date
+    button: |
+      **Date of Hearing**:
+      ${ hearing_date }
+  - Edit: hearing_time
+    button: |
+      **Time of Hearing**:
+      ${ hearing_time }
+  - Edit: signature_date
+    button: |
+      **Date of Signature**:
+      ${ signature_date }
+  - Edit: trial_court
+    button: |
+      **Trial court**
+  
+      % if defined("trial_court.address.address"):
+      * address: ${ trial_court.address.block() }
+      % endif
+  - Edit: courtroom_number
+    button: |
+      **Courtroom Number**:
+      ${ courtroom_number }
+  - Edit: docket_number
+    button: |
+      **Docket number**:
+      ${ docket_number }
+---
+continue button field: users.revisit
+question: |
+  Edit users
+subquestion: |
+  ${ users.table }
+
+  ${ users.add_action() }
+---
+table: users.table
+rows: users
+columns:
+  - Signature: |
+      row_item.signature if defined("row_item.signature") else ""
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.address") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+edit:
+  - signature
+  - name.first
+  - address.address
+  - phone_number
+confirm: True
+
+---
+continue button field: respondents.revisit
+question: |
+  Edit respondents
+subquestion: |
+  ${ respondents.table }
+
+  ${ respondents.add_action() }
+---
+table: respondents.table
+rows: respondents
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+edit:
+  - name.first
+confirm: True
+
+---
+id: download generate_notice_of_hearing
+event: generate_notice_of_hearing_download
+question: |
+  All done
+subquestion: |
+  Thank you ${users}. Your form is ready to download and deliver.
+  
+  View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
+
+  ${ action_button_html(url_action('review_generate_notice_of_hearing'), label='Edit answers', color='info') }
+  
+  
+  ${ al_user_bundle.download_list_html() }
+  
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=True) }
+
+progress: 100
+---
+# ALDocument objects specify the metadata for each template
+objects:
+  - generate_notice_of_hearing_Post_interview_instructions: ALDocument.using(title="Instructions", filename="generate_notice_of_hearing_next_steps.docx", enabled=True, has_addendum=False)
+  - generate_notice_of_hearing_attachment: ALDocument.using(title="Generate Notice of Hearing", filename="generate_notice_of_hearing", enabled=True, has_addendum=False, )
+---
+# Bundles group the ALDocuments into separate downloads, such as for court and for the user
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[generate_notice_of_hearing_Post_interview_instructions, generate_notice_of_hearing_attachment], filename="generate_notice_of_hearing", title="All forms to download for your records", enabled=True)
+  - al_court_bundle: ALDocumentBundle.using(elements=[generate_notice_of_hearing_attachment],  filename="generate_notice_of_hearing", title="All forms to deliver to court", enabled=True)
+---
+# Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is 
+# used for "preview" and "final" keys, and logic in the template checks the value of 
+# `i` to show or hide the user's signature
+attachment:
+  name: Post-interview-Instructions
+  filename: generate_notice_of_hearing_next_steps
+  docx template file: generate_notice_of_hearing_next_steps.docx
+  variable name: generate_notice_of_hearing_Post_interview_instructions[i]
+  skip undefined: True
+  tagged pdf: True
+---
+attachment:
+  name: generate notice of hearing
+  filename: generate_notice_of_hearing
+  variable name: generate_notice_of_hearing_attachment[i]
+  skip undefined: True
+  docx template file: generate_notice_of_hearing.docx
+  tagged pdf: True
+
+
+
